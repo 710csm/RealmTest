@@ -20,22 +20,6 @@ class ViewController: UIViewController {
     var realm: Realm?
     var notificationToken: NotificationToken?
     
-    //MARK: func method
-    deinit{
-        notificationToken?.invalidate()
-    }
-    
-    func inputData(database: ShoppingList) -> ShoppingList{
-        if let name = stuffTextField.text {
-            database.name = name
-        }
-        
-        if let price = priceTextField.text {
-            database.price = price
-        }
-        return database
-    }
-    
     //MARK: override func method
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,6 +41,24 @@ class ViewController: UIViewController {
         notificationToken?.invalidate()
     }
     
+    //MARK: func method
+    deinit{
+        notificationToken?.invalidate()
+    }
+    
+    func inputData(database: ShoppingList) -> ShoppingList{
+        if let name = stuffTextField.text {
+            database.name = name
+        }
+        
+        if let price = priceTextField.text {
+            database.price = price
+        }
+        return database
+    }
+    
+
+    
     //MARK: Action method
     @IBAction func add(_ sender: Any) {
         try! realm?.write{
@@ -65,9 +67,13 @@ class ViewController: UIViewController {
     }
     
     @IBAction func deleteAction(_ sender: Any) {
+        let tempObject = ShoppingList()
+        tempObject.name = stuffTextField.text ?? ""
+        tempObject.price = priceTextField.text ?? ""
+        
         do{
             try realm?.write {
-                realm?.delete(items!)
+                realm?.delete(tempObject)
             }
         }catch{
             print("Error")
@@ -76,6 +82,7 @@ class ViewController: UIViewController {
     
     @IBAction func read(_ sender: Any) {
         print(realm?.objects(ShoppingList.self))
+        
     }
     
     @IBAction func update(_ sender: Any) {
@@ -91,8 +98,6 @@ class ViewController: UIViewController {
                         list.price = price
                     }
                 }
-                stuffPrint.text = list.name
-                priceePrint.text = list.price
             })
         }
     }
@@ -102,4 +107,18 @@ class ViewController: UIViewController {
 class ShoppingList: Object{
     @objc dynamic var name = ""
     @objc dynamic var price = ""
+}
+
+extension ViewController: UITableViewDataSource, UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "stuffInfo", for: indexPath)
+        
+        
+        return cell
+    }
 }
