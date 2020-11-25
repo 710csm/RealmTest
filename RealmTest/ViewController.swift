@@ -19,6 +19,8 @@ class ViewController: UIViewController {
     var items: Results<ShoppingList>?
     var realm: Realm?
     var notificationToken: NotificationToken?
+    var readItemName = [String]()
+    var readItemPrice = [String]()
     
     //MARK: override func method
     override func viewDidLoad() {
@@ -81,7 +83,11 @@ class ViewController: UIViewController {
     }
     
     @IBAction func read(_ sender: Any) {
-        print(realm?.objects(ShoppingList.self))
+        let result = realm?.objects(ShoppingList.self).sorted(byKeyPath: "name", ascending: true)
+        let names = result?.value(forKey: "name")
+        let prices = result?.value(forKey: "price")
+        
+        print(result ?? "값 없음")
         
     }
     
@@ -112,7 +118,7 @@ class ShoppingList: Object{
 extension ViewController: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+        return readItemName.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
