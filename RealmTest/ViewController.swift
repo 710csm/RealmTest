@@ -8,12 +8,10 @@
 import UIKit
 import RealmSwift
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate{
     
     @IBOutlet weak var stuffTextField: UITextField!
     @IBOutlet weak var priceTextField: UITextField!
-    @IBOutlet weak var stuffPrint: UILabel!
-    @IBOutlet weak var priceePrint: UILabel!
     @IBOutlet weak var tableView: UITableView!
     
     var items: Results<ShoppingList>?
@@ -35,6 +33,13 @@ class ViewController: UIViewController {
             print("change : ", change)
             self.tableView.reloadData()
         })
+        
+        tableView.delegate = self
+        tableView.dataSource = self
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        tableView.reloadData()
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -59,6 +64,9 @@ class ViewController: UIViewController {
         return database
     }
     
+    func deleteData(){
+       
+    }
 
     
     //MARK: Action method
@@ -84,10 +92,12 @@ class ViewController: UIViewController {
     
     @IBAction func read(_ sender: Any) {
         let result = realm?.objects(ShoppingList.self).sorted(byKeyPath: "name", ascending: true)
-        let names = result?.value(forKey: "name")
-        let prices = result?.value(forKey: "price")
+        readItemName = result?.value(forKey: "name") as! [String]
+        readItemPrice = result?.value(forKey: "price") as! [String]
+        tableView.reloadData()
         
         print(result ?? "값 없음")
+        
         
     }
     
@@ -108,23 +118,59 @@ class ViewController: UIViewController {
         }
     }
     
-}
-
-class ShoppingList: Object{
-    @objc dynamic var name = ""
-    @objc dynamic var price = ""
-}
-
-extension ViewController: UITableViewDataSource, UITableViewDelegate {
-    
+    // MARK: TableView
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return readItemName.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "stuffInfo", for: indexPath)
-        
+        cell.textLabel?.text = readItemName[indexPath.row]
+        cell.detailTextLabel?.text = readItemPrice[indexPath.row]
         
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            // Delete the row from the data source
+            readItemName.remove(at: indexPath.row)
+            readItemPrice.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+            
+            let tempObject = ShoppingList()
+            tempObject.name = readItemName[indexPath.row]
+            tempObject.price = readItemPrice[indexPath.row]
+            
+            do{
+                try realm?.write {
+                    realm?.delete(tempObject)
+                }
+            }catch{
+                print("Error")
+            }
+        } else if editingStyle == .insert {
+            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+        }
+    }
+    
+    // 삭제 시 "Delete" 대신 "삭제"로 표시
+    func tableView(_ tableView: UITableView, titleForDeleteConfirmationButtonForRowAt indexPath: IndexPath) -> String {
+        return "삭제"
+    }
+    
+    func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+        let itemToMove = readItemName[fromIndexPath.row]
+        readItemName.remove(at: fromIndexPath.row)
+        readItemName.insert(itemToMove, at: to.row)
+        
+        readItemPrice.remove(at: fromIndexPath.row)
+        readItemPrice.insert(itemToMove, at: to.row)
+    }
+    
+}
+
+class ShoppingList: Object{
+    @objc dynamic var name = ""
+    @objc dynamic var price = ""
 }
